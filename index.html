@@ -2,385 +2,391 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>At-Home Olympics</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: Arial, sans-serif;
-      background: #f4f6f8; color: #17202a;
-    }
-    header {
-      background: #173d32; color: white;
-      padding: 24px 16px; text-align: center;
-    }
-    header h1 { margin: 0 0 8px; }
-    main { max-width: 900px; margin: auto; padding: 16px; }
-    .panel {
-      background: white; padding: 18px; border-radius: 14px;
-      margin: 14px 0; box-shadow: 0 2px 8px #0000000c;
-    }
-    input, select, button {
-      font: inherit; padding: 11px; border-radius: 8px;
-      border: 1px solid #cbd5d1; width: 100%; margin: 5px 0;
-    }
-    button {
-      background: #24634d; color: white; cursor: pointer;
-      border: 0; font-weight: bold;
-    }
-    button.secondary { background: #e5eee9; color: #173d32; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 7px; }
-    .tabs button { width: auto; flex: 1 1 110px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 12px; }
-    .muted { color: #64716b; font-size: .92rem; }
-    .status { padding: 10px; border-radius: 8px; background: #e5eee9; overflow-wrap: anywhere; }
-    .hidden { display: none; }
-    .player-row, .leader-row {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 12px; border-bottom: 1px solid #e8ece9; padding: 10px 0;
-    }
-    .player-row:last-child, .leader-row:last-child { border: 0; }
-    .medal { font-size: 1.2rem; }
-    h2 { margin-top: 0; }
-    label { display: block; margin-top: 9px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>At-Home Olympics</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--green:#173d32;--lime:#c8ed79;--bg:#f3f5ef;--card:#fff;--ink:#1b2822;--muted:#6a786f;--line:#e1e7df}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+header{background:var(--green);color:white;padding:22px 18px 18px}
+.top{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-size:clamp(22px,4vw,34px);font-weight:900;letter-spacing:-1px}
+.brand span{color:var(--lime)}
+.tagline{color:#d5e3da;margin-top:4px;font-size:13px}
+main{max-width:1100px;margin:auto;padding:18px}
+nav{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px}
+nav button{white-space:nowrap;border:1px solid var(--line);background:white;border-radius:999px;padding:10px 15px;color:var(--green);font-weight:750}
+nav button.active{background:var(--green);color:white;border-color:var(--green)}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:18px;margin-bottom:15px;box-shadow:0 3px 12px #173d3208}
+h1,h2,h3,p{margin-top:0}h2{font-size:21px;margin-bottom:7px}h3{font-size:16px}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#edf3e9;border-radius:13px;padding:14px}
+.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:var(--muted)}
+label{display:block;font-weight:700;font-size:13px;margin:10px 0 5px}
+input,select,textarea{width:100%;border:1px solid #ccd6cd;border-radius:9px;padding:11px;background:white;color:var(--ink);min-width:0}
+button.primary{background:var(--green);color:white;border:0;border-radius:10px;padding:12px 16px;font-weight:800}
+button.light{background:#eaf1e8;color:var(--green);border:0;border-radius:10px;padding:11px 14px;font-weight:750}
+button.danger{background:#fff0ed;color:#9c3327;border:0;border-radius:9px;padding:9px 12px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.person{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:43px;height:43px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#eaf1e8;font-size:24px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.person-name{font-weight:800;overflow-wrap:anywhere}.person-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.event-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.event-card{background:white;border:1px solid var(--line);border-radius:15px;padding:15px;text-align:left;color:var(--ink);min-width:0}
+.event-card.selected{border:2px solid var(--green);background:#f5faef}
+.event-icon{font-size:29px}.event-name{font-weight:850;margin:8px 0 4px}.event-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.score-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(75px,.7fr) minmax(100px,.7fr);gap:8px;align-items:end;padding:8px 0}
+.score-row label{margin-top:0}
+.badge{display:inline-block;background:#edf3e9;color:var(--green);padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}
+.empty{padding:24px 10px;text-align:center;color:var(--muted);font-size:14px}
+.medals{display:flex;gap:9px;flex-wrap:wrap;font-size:12px}
+.status{padding:12px 14px;border-radius:11px;margin-bottom:14px;background:#e5eee9;color:#173d32;font-size:13px;overflow-wrap:anywhere}
+.status.bad{background:#fde8e5;color:#872d23}
+hr{border:0;border-top:1px solid var(--line);margin:15px 0}
+footer{text-align:center;padding:22px;color:var(--muted);font-size:12px}
+@media(max-width:650px){main{padding:12px}.grid{grid-template-columns:1fr}.event-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:14px}.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:21px}.score-row{grid-template-columns:minmax(0,1.3fr) minmax(65px,.7fr)}.score-row .side-field{grid-column:1/-1}.top{align-items:flex-start}}
+</style>
 </head>
 <body>
 <header>
-  <h1>🏅 At-Home Olympics</h1>
-  <p>Play hard. Keep score. Take the podium.</p>
+  <div class="top">
+    <div>
+      <div class="brand">🏅 AT-HOME <span>OLYMPICS</span></div>
+      <div class="tagline">Your games. Your glory. Your leaderboard.</div>
+    </div>
+    <div id="headerPlayers" class="badge">Loading players…</div>
+  </div>
 </header>
 
 <main>
-  <div id="status" class="panel status">Connecting to your Olympics database...</div>
+  <div id="status" class="status">Connecting to Supabase…</div>
 
-  <section class="panel">
-    <h2>Who's playing?</h2>
-    <p class="muted">Choose your player profile or create a new one.</p>
-    <label for="currentPlayer">Your profile</label>
-    <select id="currentPlayer">
-      <option value="">Choose a player</option>
-    </select>
-    <div class="grid">
-      <div>
-        <label for="newPlayer">New player name</label>
-        <input id="newPlayer" maxlength="30" placeholder="Enter your name">
-      </div>
-      <div>
-        <label for="avatar">Choose an avatar</label>
-        <select id="avatar">
-          <option>🏅</option><option>🏆</option><option>🐯</option>
-          <option>🦊</option><option>🐸</option><option>🐻</option>
-          <option>🐼</option><option>🦅</option><option>🐙</option>
-          <option>🦈</option><option>🐢</option><option>🐉</option>
-        </select>
+  <nav id="nav">
+    <button class="active" data-page="home">🏠 Home</button>
+    <button data-page="events">🏆 Events</button>
+    <button data-page="record">✍️ Record score</button>
+    <button data-page="standings">🥇 Standings</button>
+    <button data-page="players">👥 Players</button>
+    <button data-page="history">📋 History</button>
+  </nav>
+
+  <section class="page active" id="page-home">
+    <div class="card">
+      <h2>Welcome to the Olympics</h2>
+      <p class="muted">Track every event, every result, and every medal in one place.</p>
+      <div class="stats">
+        <div class="stat"><strong id="statPlayers">0</strong><span>Competitors</span></div>
+        <div class="stat"><strong id="statMatches">0</strong><span>Results recorded</span></div>
+        <div class="stat"><strong id="statEvents">6</strong><span>Events</span></div>
       </div>
     </div>
-    <button id="createPlayer">Create player profile</button>
+    <div class="card">
+      <h2>🥇 Current leader</h2>
+      <div id="homeLeader" class="empty">No competitors yet.</div>
+    </div>
+    <div class="card">
+      <h2>🎮 Explore events</h2>
+      <div id="homeEvents" class="event-grid"></div>
+      <div class="actions"><button class="primary" onclick="showPage('record')">Record a result →</button></div>
+    </div>
+    <div class="card">
+      <h2>🕒 Latest results</h2>
+      <div id="homeHistory" class="empty">No results yet.</div>
+    </div>
   </section>
 
-  <section class="panel">
-    <h2>Events</h2>
-    <div class="tabs" id="eventTabs"></div>
-    <div id="eventDescription" class="muted" style="margin-top:12px"></div>
+  <section class="page" id="page-events">
+    <div class="card">
+      <h2>Competition events</h2>
+      <p class="muted">Select an event to see its formats or enter a result.</p>
+      <div id="allEvents" class="event-grid"></div>
+    </div>
+    <div class="card" id="eventDetail">
+      <h2>Select an event</h2>
+      <p class="muted">Event details will appear here.</p>
+    </div>
   </section>
 
-  <section class="panel">
-    <h2>Record a result</h2>
-    <p class="muted">Choose the event, participants, and scores. For doubles, enter the same score for each teammate.</p>
-    <label for="format">Game format</label>
-    <select id="format"></select>
-    <div id="scoreFields" class="grid"></div>
-    <label for="notes">Notes (optional)</label>
-    <input id="notes" maxlength="250" placeholder="Game details">
-    <button id="saveResult">Save result</button>
+  <section class="page" id="page-record">
+    <div class="card">
+      <h2>Record a result</h2>
+      <p class="muted">Choose the event, format, players, and scores. Results are saved to Supabase.</p>
+      <label for="eventSelect">Event</label>
+      <select id="eventSelect"></select>
+      <label for="formatSelect">Format</label>
+      <select id="formatSelect"></select>
+      <div id="roundsHint" class="muted"></div>
+      <hr>
+      <div id="scoreFields"></div>
+      <label for="matchNotes">Notes (optional)</label>
+      <textarea id="matchNotes" rows="2" maxlength="250" placeholder="Location, game details, etc."></textarea>
+      <div class="actions">
+        <button class="primary" id="saveResult">Save result</button>
+        <button class="light" id="clearForm">Clear form</button>
+      </div>
+    </div>
   </section>
 
-  <section class="panel">
-    <h2>🏆 Overall leaderboard</h2>
-    <p class="muted">Ranked by wins, then gold medals.</p>
-    <div id="leaderboard">No results yet.</div>
+  <section class="page" id="page-standings">
+    <div class="card">
+      <h2>🏆 Overall standings</h2>
+      <p class="muted">Wins rank first, followed by gold medals, then silver and bronze. Ties are allowed.</p>
+      <div id="leaderboard"><div class="empty">No results yet.</div></div>
+    </div>
+    <div class="card">
+      <h2>🥇 Medals by event</h2>
+      <p class="muted">Medals are calculated from each recorded result.</p>
+      <div id="eventMedals"></div>
+    </div>
   </section>
 
-  <section class="panel">
-    <h2>Recent results</h2>
-    <div id="history">No results yet.</div>
+  <section class="page" id="page-players">
+    <div class="card">
+      <h2>👥 Competitor profiles</h2>
+      <p class="muted">No passwords are required. Anyone who can access this site may be able to select a profile, so profiles are not private accounts.</p>
+      <label for="playerName">Player name</label>
+      <input id="playerName" maxlength="30" placeholder="Enter competitor name">
+      <label for="playerAvatar">Avatar</label>
+      <select id="playerAvatar">
+        <option value="🏅">🏅 Medal</option><option value="🏆">🏆 Trophy</option>
+        <option value="🐯">🐯 Tiger</option><option value="🦊">🦊 Fox</option>
+        <option value="🐸">🐸 Frog</option><option value="🐻">🐻 Bear</option>
+        <option value="🐼">🐼 Panda</option><option value="🦅">🦅 Eagle</option>
+        <option value="🐙">🐙 Octopus</option><option value="🦈">🦈 Shark</option>
+        <option value="🐢">🐢 Turtle</option><option value="🐉">🐉 Dragon</option>
+        <option value="⚡">⚡ Lightning</option><option value="🔥">🔥 Fire</option>
+      </select>
+      <label for="playerPhoto">Photo URL (optional)</label>
+      <input id="playerPhoto" type="url" placeholder="https://…">
+      <div class="actions"><button class="primary" id="addPlayer">Create player</button></div>
+    </div>
+    <div class="card">
+      <h2>All competitors</h2>
+      <div id="playerList" class="empty">No players yet.</div>
+    </div>
+  </section>
+
+  <section class="page" id="page-history">
+    <div class="card">
+      <h2>📋 Match history</h2>
+      <label for="historyFilter">Filter by event</label>
+      <select id="historyFilter"><option value="all">All events</option></select>
+      <div id="historyList"></div>
+    </div>
   </section>
 </main>
+<footer>AT-HOME OLYMPICS · Play fair. Celebrate everyone.</footer>
 
 <script>
-const SUPABASE_URL = "https://ikvamuunuoeiqxncogur.supabase.co/rest/v1/";
-const SUPABASE_KEY = "sb_publishable_Iv-7qUwY4GX1YuZBetXhSg_5dDbvQ6B";
-
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const eventInfo = {
-  pool: {
-    name: "🎱 Pool",
-    description: "Singles, doubles, or cutthroat. Highest score wins.",
-    formats: ["singles", "doubles", "cutthroat"],
-    count: f => f === "singles" ? [2,2] : f === "doubles" ? [4,4] : [3,3]
-  },
-  pickleball: {
-    name: "🏓 Pickleball",
-    description: "Singles or doubles. Highest score wins.",
-    formats: ["singles", "doubles"],
-    count: f => f === "singles" ? [2,2] : [4,4]
-  },
-  catan: {
-    name: "🌾 Catan",
-    description: "Record each player's final victory points.",
-    formats: ["multiplayer"],
-    count: () => [2,6]
-  },
-  rounds: {
-    name: "🎮 Rounds",
-    description: "Record head-to-head video game results. Enter each player's wins for the match.",
-    formats: ["singles"],
-    count: () => [2,2]
-  },
-  cornhole: {
-    name: "🌽 Cornhole",
-    description: "Singles or doubles. Highest score wins.",
-    formats: ["singles", "doubles"],
-    count: f => f === "singles" ? [2,2] : [4,4]
-  },
-  disc_golf: {
-    name: "🥏 Disc Golf",
-    description: "Standard stroke play. Lowest total strokes wins.",
-    formats: ["stroke_play"],
-    count: () => [1,6]
-  }
+const EVENTS = {
+  pool:{name:"Pool",icon:"🎱",desc:"Singles, doubles, or cutthroat.",formats:["singles","doubles","cutthroat"],min:{"singles":2,"doubles":4,"cutthroat":3},max:{"singles":2,"doubles":4,"cutthroat":3},type:"high"},
+  pickleball:{name:"Pickleball",icon:"🏓",desc:"Singles or doubles.",formats:["singles","doubles"],min:{"singles":2,"doubles":4},max:{"singles":2,"doubles":4},type:"high"},
+  catan:{name:"Catan",icon:"🌾",desc:"Highest final victory points wins.",formats:["multiplayer"],min:2,max:6,type:"high"},
+  rounds:{name:"Rounds",icon:"🎮",desc:"Head-to-head video game results. Record games won per player.",formats:["singles"],min:2,max:2,type:"high"},
+  cornhole:{name:"Cornhole",icon:"🌽",desc:"Singles or doubles.",formats:["singles","doubles"],min:{"singles":2,"doubles":4},max:{"singles":2,"doubles":4},type:"high"},
+  disc_golf:{name:"Disc Golf",icon:"🥏",desc:"Standard stroke play. Lowest total strokes wins.",formats:["stroke_play"],min:1,max:6,type:"low"}
 };
 
-let players = [];
-let matches = [];
-let selectedEvent = "pool";
-
-const $ = id => document.getElementById(id);
-const message = (text, bad = false) => {
-  $("status").textContent = text;
-  $("status").style.background = bad ? "#fde8e7" : "#e5eee9";
-};
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
-  }[c]));
+let players=[], matches=[], selectedEvent="pool";
+const $=id=>document.getElementById(id);
+const playerById=id=>players.find(p=>p.id===id);
+const evName=id=>(EVENTS[id]?.icon||"🏅")+" "+(EVENTS[id]?.name||id);
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function msg(text,bad=false){$("status").textContent=text;$("status").className="status"+(bad?" bad":"");}
+function avatar(p){return p?.photo_url?`<div class="avatar"><img src="${esc(p.photo_url)}" alt="" onerror="this.parentElement.textContent='${esc(p.avatar||"🏅")}'"></div>`:`<div class="avatar">${esc(p?.avatar||"🏅")}</div>`;}
+function fmt(f){return f==="stroke_play"?"Stroke play":f==="multiplayer"?"Multiplayer":f[0].toUpperCase()+f.slice(1);}
+function showPage(page){
+  document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+page));
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  if(page==="record")drawScoreFields();
+  window.scrollTo({top:0,behavior:"smooth"});
 }
-
-function playerOptions() {
-  return '<option value="">Choose player</option>' +
-    players.map(p =>
-      `<option value="${p.id}">${escapeHtml(p.avatar || "🏅")} ${escapeHtml(p.display_name)}</option>`
-    ).join("");
+$("nav").addEventListener("click",e=>{const b=e.target.closest("button[data-page]");if(b)showPage(b.dataset.page);});
+function eventCard(id){const e=EVENTS[id];return `<button class="event-card ${id===selectedEvent?"selected":""}" data-event-card="${id}"><div class="event-icon">${e.icon}</div><div class="event-name">${e.name}</div><div class="event-desc">${e.desc}</div><div style="margin-top:10px"><span class="badge">${e.formats.map(fmt).join(" · ")}</span></div></button>`;}
+function drawEventCards(){
+  $("homeEvents").innerHTML=Object.keys(EVENTS).map(eventCard).join("");
+  $("allEvents").innerHTML=Object.keys(EVENTS).map(eventCard).join("");
+  document.querySelectorAll("[data-event-card]").forEach(b=>b.onclick=()=>selectEvent(b.dataset.eventCard,true));
 }
-
-function drawPlayers() {
-  const previous = $("currentPlayer").value ||
-    localStorage.getItem("olympics-current-player") || "";
-  $("currentPlayer").innerHTML = playerOptions();
-  if (players.some(p => p.id === previous)) $("currentPlayer").value = previous;
+function selectEvent(id,goRecord=false){
+  selectedEvent=id;
+  $("eventSelect").value=id;
+  drawFormats();
+  drawEventCards();
+  const e=EVENTS[id];
+  const eventMatches=matches.filter(m=>m.event_id===id);
+  $("eventDetail").innerHTML=`<h2>${e.icon} ${e.name}</h2><p class="muted">${e.desc}</p><p><strong>Formats:</strong> ${e.formats.map(fmt).join(", ")}</p><p><strong>Recorded results:</strong> ${eventMatches.length}</p><div class="actions"><button class="primary" id="detailRecord">Record ${e.name} result</button></div>`;
+  $("detailRecord").onclick=()=>{showPage("record");selectEvent(id);};
+  if(goRecord)showPage("record");
 }
-
-function drawEvents() {
-  $("eventTabs").innerHTML = Object.entries(eventInfo).map(([id,e]) =>
-    `<button class="${id === selectedEvent ? "" : "secondary"}" data-event="${id}">${e.name}</button>`
-  ).join("");
-  $("eventDescription").textContent = eventInfo[selectedEvent].description;
-  $("eventTabs").querySelectorAll("button").forEach(button => {
-    button.onclick = () => {
-      selectedEvent = button.dataset.event;
-      drawEvents();
-      drawFormats();
-      drawScoreFields();
-    };
-  });
+function drawFormats(){
+  const e=EVENTS[selectedEvent];
+  $("formatSelect").innerHTML=e.formats.map(f=>`<option value="${f}">${fmt(f)}</option>`).join("");
+  drawScoreFields();
 }
-
-function drawFormats() {
-  $("format").innerHTML = eventInfo[selectedEvent].formats.map(f =>
-    `<option value="${f}">${f === "stroke_play" ? "Stroke play" : f[0].toUpperCase()+f.slice(1)}</option>`
-  ).join("");
+function limits(){
+  const e=EVENTS[selectedEvent],f=$("formatSelect").value;
+  const get=v=>typeof v==="number"?v:v[f];
+  return [get(e.min),get(e.max)];
 }
-
-function drawScoreFields() {
-  const format = $("format").value || eventInfo[selectedEvent].formats[0];
-  const [min, max] = eventInfo[selectedEvent].count(format);
-  const count = Math.min(max, Math.max(min, players.length));
-  let html = "";
-  for (let i=0; i<count; i++) {
-    html += `<div>
-      <label>Player ${i+1}</label>
-      <select class="participant">${playerOptions()}</select>
-      <label>${selectedEvent === "catan" ? "Victory points" :
-        selectedEvent === "disc_golf" ? "Total strokes" :
-        selectedEvent === "rounds" ? "Games won" : "Score"}</label>
-      <input class="score" type="number" min="0" step="1" required placeholder="Enter score">
-      ${format === "doubles" ? `<label>Team</label><select class="side"><option value="1">Team 1</option><option value="2">Team 2</option></select>` : ""}
+function drawScoreFields(){
+  if(!$("formatSelect").value)return;
+  const [min,max]=limits();
+  let count=Math.max(min,Math.min(max,players.length||min));
+  if(selectedEvent==="disc_golf")count=Math.max(1,Math.min(6,players.length||1));
+  const isTeam=$("formatSelect").value==="doubles";
+  const scoreLabel=selectedEvent==="catan"?"Victory points":selectedEvent==="disc_golf"?"Total strokes":selectedEvent==="rounds"?"Games won":"Score";
+  $("roundsHint").textContent=selectedEvent==="rounds"?"Enter the number of games won by each player in this head-to-head match.":isTeam?"Assign two players to each team. Both teammates must have the same team score.":selectedEvent==="disc_golf"?"Enter each player's total strokes. Lowest score wins.":"Enter each participant's final score. Highest score wins unless the event says otherwise.";
+  let html="";
+  for(let i=0;i<count;i++){
+    html+=`<div class="score-row">
+      <div><label>Player ${i+1}</label><select class="participant"><option value="">Choose player</option>${players.map(p=>`<option value="${p.id}">${esc(p.avatar||"🏅")} ${esc(p.display_name)}</option>`).join("")}</select></div>
+      <div><label>${scoreLabel}</label><input class="score" type="number" min="0" step="1" placeholder="0" required></div>
+      ${isTeam?`<div class="side-field"><label>Team</label><select class="side"><option value="1">Team 1</option><option value="2">Team 2</option></select></div>`:""}
     </div>`;
   }
-  $("scoreFields").innerHTML = html;
-  if (players.length < min) {
-    $("scoreFields").insertAdjacentHTML("beforeend",
-      `<p class="muted">Add at least ${min} player profiles before recording this result.</p>`);
-  }
+  $("scoreFields").innerHTML=html;
+  if(players.length<min)$("scoreFields").insertAdjacentHTML("beforeend",`<p class="muted">Create at least ${min} player profile(s) before recording this result.</p>`);
 }
-
-async function loadAll() {
-  const [p, m, mp] = await Promise.all([
+$("eventSelect").addEventListener("change",()=>selectEvent($("eventSelect").value));
+$("formatSelect").addEventListener("change",drawScoreFields);
+$("clearForm").onclick=()=>{ $("matchNotes").value="";drawScoreFields(); };
+async function loadAll(){
+  const [p,m,mp]=await Promise.all([
     db.from("players").select("*").order("display_name"),
-    db.from("matches").select("*").eq("status","completed").order("played_at",{ascending:false}).limit(100),
+    db.from("matches").select("*").order("played_at",{ascending:false}).limit(300),
     db.from("match_players").select("*")
   ]);
-  if (p.error) throw p.error;
-  if (m.error) throw m.error;
-  if (mp.error) throw mp.error;
-
-  players = p.data;
-  matches = m.data.map(match => ({
-    ...match,
-    participants: mp.data.filter(row => row.match_id === match.id)
-  }));
-
-  drawPlayers();
-  drawEvents();
-  drawFormats();
-  drawScoreFields();
-  drawLeaderboard();
-  drawHistory();
-  message("Connected! Your Olympics database is ready.");
+  if(p.error)throw p.error;if(m.error)throw m.error;if(mp.error)throw mp.error;
+  players=p.data||[];
+  matches=(m.data||[]).filter(m=>m.status==="completed").map(m=>({...m,participants:(mp.data||[]).filter(x=>x.match_id===m.id)}));
+  renderAll();
+  msg("Connected! Your Olympics data is loading from Supabase.");
 }
-
-$("currentPlayer").addEventListener("change", () => {
-  localStorage.setItem("olympics-current-player", $("currentPlayer").value);
-});
-
-$("format").addEventListener("change", drawScoreFields);
-
-$("createPlayer").addEventListener("click", async () => {
-  const name = $("newPlayer").value.trim();
-  if (!name) return message("Enter a player name first.", true);
-  const { data, error } = await db.from("players").insert({
-    display_name: name,
-    avatar: $("avatar").value
-  }).select().single();
-
-  if (error) return message("Could not create player: " + error.message, true);
-  $("newPlayer").value = "";
-  await loadAll();
-  $("currentPlayer").value = data.id;
-  localStorage.setItem("olympics-current-player", data.id);
-  message("Player profile created!");
-});
-
-$("saveResult").addEventListener("click", async () => {
-  const format = $("format").value;
-  const participantSelects = [...document.querySelectorAll(".participant")];
-  const scoreInputs = [...document.querySelectorAll(".score")];
-  const sideInputs = [...document.querySelectorAll(".side")];
-
-  const entries = participantSelects.map((el, i) => ({
-    player_id: el.value,
-    score: scoreInputs[i].value === "" ? null : Number(scoreInputs[i].value),
-    side: sideInputs.length ? Number(sideInputs[i].value) : 1
-  }));
-
-  const [min,max] = eventInfo[selectedEvent].count(format);
-  if (entries.length < min || entries.length > max ||
-      entries.some(e => !e.player_id || e.score === null || !Number.isFinite(e.score) || e.score < 0)) {
-    return message("Choose all players and enter a non-negative score for everyone.", true);
+function renderAll(){
+  $("headerPlayers").textContent=`${players.length} competitor${players.length===1?"":"s"}`;
+  $("statPlayers").textContent=players.length;
+  $("statMatches").textContent=matches.length;
+  $("eventSelect").innerHTML=Object.keys(EVENTS).map(id=>`<option value="${id}">${evName(id)}</option>`).join("");
+  $("historyFilter").innerHTML='<option value="all">All events</option>'+Object.keys(EVENTS).map(id=>`<option value="${id}">${evName(id)}</option>`).join("");
+  $("eventSelect").value=selectedEvent;
+  drawFormats();drawEventCards();drawPlayers();drawStandings();drawHistory();drawHome();
+  selectEvent(selectedEvent);
+}
+$("addPlayer").onclick=async()=>{
+  const name=$("playerName").value.trim();
+  if(!name)return msg("Enter a player name first.",true);
+  const photo=$("playerPhoto").value.trim();
+  if(photo&&!/^https?:\/\//i.test(photo))return msg("Photo URL must begin with http:// or https://.",true);
+  const {error}=await db.from("players").insert({display_name:name,avatar:$("playerAvatar").value,photo_url:photo||null});
+  if(error)return msg("Could not create player: "+error.message,true);
+  $("playerName").value="";$("playerPhoto").value="";
+  await loadAll();msg("Player profile created.");
+};
+function playerStats(p){
+  let wins=0,gold=0,silver=0,bronze=0,played=0;
+  for(const m of matches){
+    const own=m.participants.find(x=>x.player_id===p.id);
+    if(!own)continue;
+    played++;
+    if(own.is_winner)wins++;
+    if(own.placement===1)gold++;
+    if(own.placement===2)silver++;
+    if(own.placement===3)bronze++;
   }
-  if (new Set(entries.map(e => e.player_id)).size !== entries.length) {
-    return message("Each player can only be selected once per result.", true);
+  return {...p,wins,gold,silver,bronze,played};
+}
+function standings(){return players.map(playerStats).sort((a,b)=>b.wins-a.wins||b.gold-a.gold||b.silver-a.silver||b.bronze-a.bronze||a.display_name.localeCompare(b.display_name));}
+function drawPlayers(){
+  $("playerList").innerHTML=players.length?players.map(p=>{
+    const s=playerStats(p);
+    return `<div class="row"><div class="person">${avatar(p)}<div><div class="person-name">${esc(p.display_name)}</div><div class="person-sub">${s.played} results · ${s.wins} wins</div></div></div><div class="medals">🥇 ${s.gold}　🥈 ${s.silver}　🥉 ${s.bronze}</div></div>`;
+  }).join(""):'<div class="empty">No competitors yet. Create the first player above.</div>';
+}
+function drawStandings(){
+  const list=standings();
+  $("leaderboard").innerHTML=list.length?list.map((p,i)=>`<div class="row"><div class="person"><div style="font-size:25px;width:27px">${i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>${avatar(p)}<div><div class="person-name">${esc(p.display_name)}</div><div class="person-sub">${p.wins} wins · ${p.played} results</div></div></div><div class="medals"><span>🥇 ${p.gold}</span><span>🥈 ${p.silver}</span><span>🥉 ${p.bronze}</span></div></div>`).join(""):'<div class="empty">Record a result to start the leaderboard.</div>';
+  $("eventMedals").innerHTML=Object.keys(EVENTS).map(id=>{
+    const stats=players.map(p=>({...p,g:0,s:0,b:0}));
+    const eventMatches=matches.filter(m=>m.event_id===id);
+    for(const m of eventMatches)for(const entry of m.participants){
+      const p=stats.find(x=>x.id===entry.player_id);if(!p)continue;
+      if(entry.placement===1)p.g++;if(entry.placement===2)p.s++;if(entry.placement===3)p.b++;
+    }
+    return `<div class="row"><strong>${evName(id)}</strong><div class="medals">🥇 ${stats.reduce((a,p)=>a+p.g,0)}　🥈 ${stats.reduce((a,p)=>a+p.s,0)}　🥉 ${stats.reduce((a,p)=>a+p.b,0)}</div></div>`;
+  }).join("");
+}
+function resultLine(m){
+  const names=m.participants.map(e=>{
+    const p=playerById(e.player_id);
+    return `${esc(p?.display_name||"Unknown player")} <strong>${esc(e.score)}</strong>${e.is_winner?" 🏆":""}`;
+  }).join(" · ");
+  return `<div class="row"><div style="min-width:0"><div class="person-name">${evName(m.event_id)} <span class="badge">${fmt(m.format)}</span></div><div style="font-size:13px;margin-top:5px;overflow-wrap:anywhere">${names}</div><div class="person-sub">${new Date(m.played_at).toLocaleString()}${m.notes?" · "+esc(m.notes):""}</div></div></div>`;
+}
+function drawHistory(){
+  const filter=$("historyFilter").value||"all";
+  const list=matches.filter(m=>filter==="all"||m.event_id===filter);
+  $("historyList").innerHTML=list.length?list.map(resultLine).join(""):'<div class="empty">No matching results yet.</div>';
+}
+$("historyFilter").addEventListener("change",drawHistory);
+function drawHome(){
+  const list=standings();
+  $("homeLeader").innerHTML=list.length?`<div class="person">${avatar(list[0])}<div><div class="person-name">${esc(list[0].display_name)}</div><div class="person-sub">${list[0].wins} wins · 🥇 ${list[0].gold} gold medals</div></div></div>`:'<div class="empty">Create players and record results to crown a leader.</div>';
+  $("homeHistory").innerHTML=matches.length?matches.slice(0,5).map(resultLine).join(""):'<div class="empty">No results have been recorded yet.</div>';
+}
+$("saveResult").onclick=async()=>{
+  const format=$("formatSelect").value,[min,max]=limits();
+  const selectEls=[...document.querySelectorAll(".participant")],scores=[...document.querySelectorAll(".score")],sides=[...document.querySelectorAll(".side")];
+  const entries=selectEls.map((el,i)=>({player_id:el.value,score:scores[i].value===""?null:Number(scores[i].value),side:sides.length?Number(sides[i].value):1}));
+  if(entries.length<min||entries.length>max||entries.some(e=>!e.player_id||e.score===null||!Number.isFinite(e.score)||e.score<0||!Number.isInteger(e.score)))return msg("Choose all players and enter non-negative whole-number scores.",true);
+  if(new Set(entries.map(e=>e.player_id)).size!==entries.length)return msg("Each player may only be selected once per result.",true);
+  if(format==="doubles"){
+    for(const side of [1,2]){
+      const team=entries.filter(e=>e.side===side);
+      if(team.length!==2)return msg("Doubles requires exactly two players on each team.",true);
+      if(team[0].score!==team[1].score)return msg("Both teammates on each team must have the same score.",true);
+    }
   }
-
-  let ranked = [...entries];
-  if (selectedEvent === "disc_golf") {
-    ranked.sort((a,b) => a.score - b.score);
-  } else {
-    ranked.sort((a,b) => b.score - a.score);
-  }
-  const placements = new Map();
-  ranked.forEach((e,i) => {
-    if (!placements.has(e.score)) placements.set(e.score, i+1);
-  });
-
-  const winningScore = selectedEvent === "disc_golf"
-    ? Math.min(...entries.map(e => e.score))
-    : Math.max(...entries.map(e => e.score));
-
-  const { data: match, error: matchError } = await db.from("matches").insert({
-    event_id: selectedEvent,
-    format,
-    status: "completed",
-    notes: $("notes").value.trim() || null
-  }).select().single();
-
-  if (matchError) return message("Could not save result: " + matchError.message, true);
-
-  const rows = entries.map(e => ({
-    match_id: match.id,
-    player_id: e.player_id,
-    side: e.side,
-    score: e.score,
-    placement: placements.get(e.score),
-    is_winner: e.score === winningScore
-  }));
-
-  const { error: rowError } = await db.from("match_players").insert(rows);
-  if (rowError) {
+  if(format==="cutthroat"&&entries.length!==3)return msg("Cutthroat requires three players.",true);
+  if(selectedEvent==="rounds"&&entries.length!==2)return msg("Rounds requires two players.",true);
+  const scoreFor=e=>format==="doubles"?entries.find(x=>x.side===e.side).score:e.score;
+  const ranked=[...entries].sort((a,b)=>EVENTS[selectedEvent].type==="low"?scoreFor(a)-scoreFor(b):scoreFor(b)-scoreFor(a));
+  const distinct=[...new Set(ranked.map(scoreFor))];
+  const placementFor=e=>distinct.indexOf(scoreFor(e))+1;
+  const best=distinct[0];
+  const {data:match,error:me}=await db.from("matches").insert({event_id:selectedEvent,format,status:"completed",notes:$("matchNotes").value.trim()||null}).select().single();
+  if(me)return msg("Could not save result: "+me.message,true);
+  const rows=entries.map(e=>({match_id:match.id,player_id:e.player_id,side:e.side,score:e.score,placement:placementFor(e),is_winner:scoreFor(e)===best,details:{}}));
+  const {error:pe}=await db.from("match_players").insert(rows);
+  if(pe){
     await db.from("matches").delete().eq("id",match.id);
-    return message("Could not save player scores: " + rowError.message, true);
+    return msg("Could not save player scores: "+pe.message,true);
   }
-
-  $("notes").value = "";
+  $("matchNotes").value="";
   await loadAll();
-  message("Result saved successfully!");
-});
+  msg("Result saved successfully!");
+  showPage("standings");
+};
+document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 
-function drawLeaderboard() {
-  const stats = players.map(p => {
-    let wins = 0, gold = 0, silver = 0, bronze = 0;
-    matches.forEach(m => {
-      const entry = m.participants.find(x => x.player_id === p.id);
-      if (!entry) return;
-      if (entry.is_winner) wins++;
-      if (entry.placement === 1) gold++;
-      if (entry.placement === 2) silver++;
-      if (entry.placement === 3) bronze++;
-    });
-    return {...p,wins,gold,silver,bronze};
-  }).sort((a,b) => b.wins-a.wins || b.gold-a.gold || a.display_name.localeCompare(b.display_name));
-
-  $("leaderboard").innerHTML = stats.length ? stats.map((p,i) =>
-    `<div class="leader-row">
-      <div><strong>${i+1}. ${escapeHtml(p.avatar || "🏅")} ${escapeHtml(p.display_name)}</strong>
-      <div class="muted">${p.wins} wins · 🥇 ${p.gold} · 🥈 ${p.silver} · 🥉 ${p.bronze}</div></div>
-    </div>`
-  ).join("") : "Create the first player to begin.";
-}
-
-function drawHistory() {
-  const recent = matches.slice(0,15);
-  $("history").innerHTML = recent.length ? recent.map(m => {
-    const event = eventInfo[m.event_id]?.name || m.event_id;
-    const people = m.participants.map(p => {
-      const person = players.find(x => x.id === p.player_id);
-      return `${escapeHtml(person?.display_name || "Player")} (${p.score})`;
-    }).join(" · ");
-    return `<div class="player-row"><div><strong>${event}</strong><div>${people}</div>
-      <div class="muted">${new Date(m.played_at).toLocaleDateString()}${m.notes ? " · "+escapeHtml(m.notes) : ""}</div></div></div>`;
-  }).join("") : "No results have been recorded yet.";
-}
-
-if (SUPABASE_URL.includes("PASTE_") || SUPABASE_KEY.includes("PASTE_")) {
-  message("Add your Supabase Project URL and publishable key in the code before using the website.", true);
-} else {
-  loadAll().catch(error => message("Connection error: " + error.message, true));
+if(SUPABASE_URL.includes("PASTE_")||SUPABASE_KEY.includes("PASTE_")){
+  msg("Set your Supabase Project URL and publishable key in index.html, then commit the changes.",true);
+}else{
+  loadAll().catch(e=>msg("Database connection error: "+e.message,true));
 }
 </script>
 </body>
