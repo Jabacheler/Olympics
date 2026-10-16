@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>At-Home Olympics</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif;
+      background: #f4f6f8; color: #17202a;
+    }
+    header {
+      background: #173d32; color: white;
+      padding: 24px 16px; text-align: center;
+    }
+    header h1 { margin: 0 0 8px; }
+    main { max-width: 900px; margin: auto; padding: 16px; }
+    .panel {
+      background: white; padding: 18px; border-radius: 14px;
+      margin: 14px 0; box-shadow: 0 2px 8px #0000000c;
+    }
+    input, select, button {
+      font: inherit; padding: 11px; border-radius: 8px;
+      border: 1px solid #cbd5d1; width: 100%; margin: 5px 0;
+    }
+    button {
+      background: #24634d; color: white; cursor: pointer;
+      border: 0; font-weight: bold;
+    }
+    button.secondary { background: #e5eee9; color: #173d32; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tabs button { width: auto; flex: 1 1 110px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 12px; }
+    .muted { color: #64716b; font-size: .92rem; }
+    .status { padding: 10px; border-radius: 8px; background: #e5eee9; overflow-wrap: anywhere; }
+    .hidden { display: none; }
+    .player-row, .leader-row {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; border-bottom: 1px solid #e8ece9; padding: 10px 0;
+    }
+    .player-row:last-child, .leader-row:last-child { border: 0; }
+    .medal { font-size: 1.2rem; }
+    h2 { margin-top: 0; }
+    label { display: block; margin-top: 9px; font-weight: bold; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🏅 At-Home Olympics</h1>
+  <p>Play hard. Keep score. Take the podium.</p>
+</header>
+
+<main>
+  <div id="status" class="panel status">Connecting to your Olympics database...</div>
+
+  <section class="panel">
+    <h2>Who's playing?</h2>
+    <p class="muted">Choose your player profile or create a new one.</p>
+    <label for="currentPlayer">Your profile</label>
+    <select id="currentPlayer">
+      <option value="">Choose a player</option>
+    </select>
+    <div class="grid">
+      <div>
+        <label for="newPlayer">New player name</label>
+        <input id="newPlayer" maxlength="30" placeholder="Enter your name">
+      </div>
+      <div>
+        <label for="avatar">Choose an avatar</label>
+        <select id="avatar">
+          <option>🏅</option><option>🏆</option><option>🐯</option>
+          <option>🦊</option><option>🐸</option><option>🐻</option>
+          <option>🐼</option><option>🦅</option><option>🐙</option>
+          <option>🦈</option><option>🐢</option><option>🐉</option>
+        </select>
+      </div>
+    </div>
+    <button id="createPlayer">Create player profile</button>
+  </section>
+
+  <section class="panel">
+    <h2>Events</h2>
+    <div class="tabs" id="eventTabs"></div>
+    <div id="eventDescription" class="muted" style="margin-top:12px"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Record a result</h2>
+    <p class="muted">Choose the event, participants, and scores. For doubles, enter the same score for each teammate.</p>
+    <label for="format">Game format</label>
+    <select id="format"></select>
+    <div id="scoreFields" class="grid"></div>
+    <label for="notes">Notes (optional)</label>
+    <input id="notes" maxlength="250" placeholder="Game details">
+    <button id="saveResult">Save result</button>
+  </section>
+
+  <section class="panel">
+    <h2>🏆 Overall leaderboard</h2>
+    <p class="muted">Ranked by wins, then gold medals.</p>
+    <div id="leaderboard">No results yet.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Recent results</h2>
+    <div id="history">No results yet.</div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://ikvamuunuoeiqxncogur.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_Iv-7qUwY4GX1YuZBetXhSg_5dDbvQ6B";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const eventInfo = {
+  pool: {
+    name: "🎱 Pool",
+    description: "Singles, doubles, or cutthroat. Highest score wins.",
+    formats: ["singles", "doubles", "cutthroat"],
+    count: f => f === "singles" ? [2,2] : f === "doubles" ? [4,4] : [3,3]
+  },
+  pickleball: {
+    name: "🏓 Pickleball",
+    description: "Singles or doubles. Highest score wins.",
+    formats: ["singles", "doubles"],
+    count: f => f === "singles" ? [2,2] : [4,4]
+  },
+  catan: {
+    name: "🌾 Catan",
+    description: "Record each player's final victory points.",
+    formats: ["multiplayer"],
+    count: () => [2,6]
+  },
+  rounds: {
+    name: "🎮 Rounds",
+    description: "Record head-to-head video game results. Enter each player's wins for the match.",
+    formats: ["singles"],
+    count: () => [2,2]
+  },
+  cornhole: {
+    name: "🌽 Cornhole",
+    description: "Singles or doubles. Highest score wins.",
+    formats: ["singles", "doubles"],
+    count: f => f === "singles" ? [2,2] : [4,4]
+  },
+  disc_golf: {
+    name: "🥏 Disc Golf",
+    description: "Standard stroke play. Lowest total strokes wins.",
+    formats: ["stroke_play"],
+    count: () => [1,6]
+  }
+};
+
+let players = [];
+let matches = [];
+let selectedEvent = "pool";
+
+const $ = id => document.getElementById(id);
+const message = (text, bad = false) => {
+  $("status").textContent = text;
+  $("status").style.background = bad ? "#fde8e7" : "#e5eee9";
+};
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+function playerOptions() {
+  return '<option value="">Choose player</option>' +
+    players.map(p =>
+      `<option value="${p.id}">${escapeHtml(p.avatar || "🏅")} ${escapeHtml(p.display_name)}</option>`
+    ).join("");
+}
+
+function drawPlayers() {
+  const previous = $("currentPlayer").value ||
+    localStorage.getItem("olympics-current-player") || "";
+  $("currentPlayer").innerHTML = playerOptions();
+  if (players.some(p => p.id === previous)) $("currentPlayer").value = previous;
+}
+
+function drawEvents() {
+  $("eventTabs").innerHTML = Object.entries(eventInfo).map(([id,e]) =>
+    `<button class="${id === selectedEvent ? "" : "secondary"}" data-event="${id}">${e.name}</button>`
+  ).join("");
+  $("eventDescription").textContent = eventInfo[selectedEvent].description;
+  $("eventTabs").querySelectorAll("button").forEach(button => {
+    button.onclick = () => {
+      selectedEvent = button.dataset.event;
+      drawEvents();
+      drawFormats();
+      drawScoreFields();
+    };
+  });
+}
+
+function drawFormats() {
+  $("format").innerHTML = eventInfo[selectedEvent].formats.map(f =>
+    `<option value="${f}">${f === "stroke_play" ? "Stroke play" : f[0].toUpperCase()+f.slice(1)}</option>`
+  ).join("");
+}
+
+function drawScoreFields() {
+  const format = $("format").value || eventInfo[selectedEvent].formats[0];
+  const [min, max] = eventInfo[selectedEvent].count(format);
+  const count = Math.min(max, Math.max(min, players.length));
+  let html = "";
+  for (let i=0; i<count; i++) {
+    html += `<div>
+      <label>Player ${i+1}</label>
+      <select class="participant">${playerOptions()}</select>
+      <label>${selectedEvent === "catan" ? "Victory points" :
+        selectedEvent === "disc_golf" ? "Total strokes" :
+        selectedEvent === "rounds" ? "Games won" : "Score"}</label>
+      <input class="score" type="number" min="0" step="1" required placeholder="Enter score">
+      ${format === "doubles" ? `<label>Team</label><select class="side"><option value="1">Team 1</option><option value="2">Team 2</option></select>` : ""}
+    </div>`;
+  }
+  $("scoreFields").innerHTML = html;
+  if (players.length < min) {
+    $("scoreFields").insertAdjacentHTML("beforeend",
+      `<p class="muted">Add at least ${min} player profiles before recording this result.</p>`);
+  }
+}
+
+async function loadAll() {
+  const [p, m, mp] = await Promise.all([
+    db.from("players").select("*").order("display_name"),
+    db.from("matches").select("*").eq("status","completed").order("played_at",{ascending:false}).limit(100),
+    db.from("match_players").select("*")
+  ]);
+  if (p.error) throw p.error;
+  if (m.error) throw m.error;
+  if (mp.error) throw mp.error;
+
+  players = p.data;
+  matches = m.data.map(match => ({
+    ...match,
+    participants: mp.data.filter(row => row.match_id === match.id)
+  }));
+
+  drawPlayers();
+  drawEvents();
+  drawFormats();
+  drawScoreFields();
+  drawLeaderboard();
+  drawHistory();
+  message("Connected! Your Olympics database is ready.");
+}
+
+$("currentPlayer").addEventListener("change", () => {
+  localStorage.setItem("olympics-current-player", $("currentPlayer").value);
+});
+
+$("format").addEventListener("change", drawScoreFields);
+
+$("createPlayer").addEventListener("click", async () => {
+  const name = $("newPlayer").value.trim();
+  if (!name) return message("Enter a player name first.", true);
+  const { data, error } = await db.from("players").insert({
+    display_name: name,
+    avatar: $("avatar").value
+  }).select().single();
+
+  if (error) return message("Could not create player: " + error.message, true);
+  $("newPlayer").value = "";
+  await loadAll();
+  $("currentPlayer").value = data.id;
+  localStorage.setItem("olympics-current-player", data.id);
+  message("Player profile created!");
+});
+
+$("saveResult").addEventListener("click", async () => {
+  const format = $("format").value;
+  const participantSelects = [...document.querySelectorAll(".participant")];
+  const scoreInputs = [...document.querySelectorAll(".score")];
+  const sideInputs = [...document.querySelectorAll(".side")];
+
+  const entries = participantSelects.map((el, i) => ({
+    player_id: el.value,
+    score: scoreInputs[i].value === "" ? null : Number(scoreInputs[i].value),
+    side: sideInputs.length ? Number(sideInputs[i].value) : 1
+  }));
+
+  const [min,max] = eventInfo[selectedEvent].count(format);
+  if (entries.length < min || entries.length > max ||
+      entries.some(e => !e.player_id || e.score === null || !Number.isFinite(e.score) || e.score < 0)) {
+    return message("Choose all players and enter a non-negative score for everyone.", true);
+  }
+  if (new Set(entries.map(e => e.player_id)).size !== entries.length) {
+    return message("Each player can only be selected once per result.", true);
+  }
+
+  let ranked = [...entries];
+  if (selectedEvent === "disc_golf") {
+    ranked.sort((a,b) => a.score - b.score);
+  } else {
+    ranked.sort((a,b) => b.score - a.score);
+  }
+  const placements = new Map();
+  ranked.forEach((e,i) => {
+    if (!placements.has(e.score)) placements.set(e.score, i+1);
+  });
+
+  const winningScore = selectedEvent === "disc_golf"
+    ? Math.min(...entries.map(e => e.score))
+    : Math.max(...entries.map(e => e.score));
+
+  const { data: match, error: matchError } = await db.from("matches").insert({
+    event_id: selectedEvent,
+    format,
+    status: "completed",
+    notes: $("notes").value.trim() || null
+  }).select().single();
+
+  if (matchError) return message("Could not save result: " + matchError.message, true);
+
+  const rows = entries.map(e => ({
+    match_id: match.id,
+    player_id: e.player_id,
+    side: e.side,
+    score: e.score,
+    placement: placements.get(e.score),
+    is_winner: e.score === winningScore
+  }));
+
+  const { error: rowError } = await db.from("match_players").insert(rows);
+  if (rowError) {
+    await db.from("matches").delete().eq("id",match.id);
+    return message("Could not save player scores: " + rowError.message, true);
+  }
+
+  $("notes").value = "";
+  await loadAll();
+  message("Result saved successfully!");
+});
+
+function drawLeaderboard() {
+  const stats = players.map(p => {
+    let wins = 0, gold = 0, silver = 0, bronze = 0;
+    matches.forEach(m => {
+      const entry = m.participants.find(x => x.player_id === p.id);
+      if (!entry) return;
+      if (entry.is_winner) wins++;
+      if (entry.placement === 1) gold++;
+      if (entry.placement === 2) silver++;
+      if (entry.placement === 3) bronze++;
+    });
+    return {...p,wins,gold,silver,bronze};
+  }).sort((a,b) => b.wins-a.wins || b.gold-a.gold || a.display_name.localeCompare(b.display_name));
+
+  $("leaderboard").innerHTML = stats.length ? stats.map((p,i) =>
+    `<div class="leader-row">
+      <div><strong>${i+1}. ${escapeHtml(p.avatar || "🏅")} ${escapeHtml(p.display_name)}</strong>
+      <div class="muted">${p.wins} wins · 🥇 ${p.gold} · 🥈 ${p.silver} · 🥉 ${p.bronze}</div></div>
+    </div>`
+  ).join("") : "Create the first player to begin.";
+}
+
+function drawHistory() {
+  const recent = matches.slice(0,15);
+  $("history").innerHTML = recent.length ? recent.map(m => {
+    const event = eventInfo[m.event_id]?.name || m.event_id;
+    const people = m.participants.map(p => {
+      const person = players.find(x => x.id === p.player_id);
+      return `${escapeHtml(person?.display_name || "Player")} (${p.score})`;
+    }).join(" · ");
+    return `<div class="player-row"><div><strong>${event}</strong><div>${people}</div>
+      <div class="muted">${new Date(m.played_at).toLocaleDateString()}${m.notes ? " · "+escapeHtml(m.notes) : ""}</div></div></div>`;
+  }).join("") : "No results have been recorded yet.";
+}
+
+if (SUPABASE_URL.includes("PASTE_") || SUPABASE_KEY.includes("PASTE_")) {
+  message("Add your Supabase Project URL and publishable key in the code before using the website.", true);
+} else {
+  loadAll().catch(error => message("Connection error: " + error.message, true));
+}
+</script>
+</body>
+</html>
